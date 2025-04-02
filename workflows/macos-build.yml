@@ -1,0 +1,27 @@
+name: Build udp2raw for macOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          brew install cmake make libpcap
+
+      - name: Compile binary
+        run: |
+          make
+          ls -lh ./udp2raw
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: udp2raw-macos
+          path: ./udp2raw
