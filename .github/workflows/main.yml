@@ -1,26 +1,35 @@
-name: Build udp2raw for macOS
+name: Build macOS binary
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Install dependencies
+      - name: Set up osxcross
         run: |
-          brew install cmake make libpcap
+          sudo apt update
+          sudo apt install -y cmake clang llvm git curl libssl-dev libz-dev make
+          git clone https://github.com/tpoechtrager/osxcross.git
+          cd osxcross
+          curl -LO https://github.com/DevidLimcher/sdk-releases/releases/download/1/MacOSX10.11.sdk.tar.xz
+          mv MacOSX10.11.sdk.tar.xz tarballs/
+          UNATTENDED=1 ./tools/gen_sdk_package_pbzx.sh tarballs/MacOSX10.11.sdk.tar.xz
+          SDK_VERSION=10.11 ./build.sh
+          echo "PATH=$PWD/target/bin:$PATH" >> $GITHUB_ENV
 
-      - name: Compile binary
+      - name: Build udp2raw
         run: |
+          export PATH=$PATH:$HOME/osxcross/target/bin
+          export CC=o64-clang
+          export CXX=o64-clang++
           make
-          ls -lh ./udp2raw
 
-      - name: Upload binary
+      - name: Upload macOS binary
         uses: actions/upload-artifact@v3
         with:
           name: udp2raw-macos
